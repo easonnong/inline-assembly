@@ -16,6 +16,7 @@ contract AngleExplainsBase {
         secretNumber = number;
     }
 
+    // 43814 fist time -> and then 23914 gas
     function addGuess(uint _guess) external {
         guesses[msg.sender] = _guess;
     }
@@ -63,8 +64,15 @@ contract AngleExplainsBaseAssembly {
         }
     }
 
+    // 43807 fist time -> and then 23907 gas
     function addGuess(uint _guess) external {
-        guesses[msg.sender] = _guess;
+        assembly {
+            let ptr := mload(0x40)
+            mstore(ptr, caller())
+            mstore(add(ptr, 0x20), guesses.slot)
+            let slot := keccak256(ptr, 0x40)
+            sstore(slot, _guess)
+        }
     }
 
     function addMultipleGuesses(address[] memory _users, uint[] memory _guesses)
