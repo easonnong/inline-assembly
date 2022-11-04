@@ -21,6 +21,7 @@ contract AngleExplainsBase {
         guesses[msg.sender] = _guess;
     }
 
+    // 70217 gas fist time -> and then 30417 gas
     function addMultipleGuesses(address[] memory _users, uint[] memory _guesses)
         external
     {
@@ -75,11 +76,25 @@ contract AngleExplainsBaseAssembly {
         }
     }
 
+    // 69891 gas fist time -> and then 30091 gas
     function addMultipleGuesses(address[] memory _users, uint[] memory _guesses)
         external
     {
-        for (uint i = 0; i < _users.length; i++) {
-            guesses[_users[i]] = _guesses[i];
+        assembly {
+            let usersSize := mload(_users)
+            let guessesSize := mload(_guesses)
+            for {
+                let i := 0
+            } lt(i, usersSize) {
+                i := add(i, 1)
+            } {
+                let userAddr := mload(add(_users, mul(0x20, add(i, 1))))
+                let userBalance := mload(add(_guesses, mul(0x20, add(i, 1))))
+                mstore(0, userAddr)
+                mstore(0x20, guesses.slot)
+                let slot := keccak256(0, 0x40)
+                sstore(slot, userBalance)
+            }
         }
     }
 
